@@ -117,6 +117,9 @@ jobs:
           files: coverage.out
           flags: unit
           fail_ci_if_error: true
+          # Avoid flaky failures when the action cannot import/verify the Codecov CLI
+          # signing key on the runner (GPG "No public key" / empty key material).
+          skip_validation: true
           name: unit
 
   # Catches data races in provider and client code. Keep ./... unless a package
