@@ -3,12 +3,12 @@
 page_title: "langsmith_tool Data Source - langsmith"
 subcategory: ""
 description: |-
-  Read a LangSmith platform tool from the hosted registry (/v1/platform/tools). Use either handle or id as the lookup key (exactly one per block). Requires the same provider authentication as other LangSmith data sources: set api_key (or LANGSMITH_API_KEY) and, for org-scoped keys, tenant_id / LANGSMITH_TENANT_ID so the X-Tenant-Id header is sent. Tool listing is workspace-scoped per the API; results match an authenticated GET to the same path on the LangSmith API.
+  Read a LangSmith platform tool from the registry (GET /v1/platform/tools/{handle} or GET /v1/platform/tools/id/{id}). Specify exactly one of handle or id. Use the same authentication as other data sources: api_key / LANGSMITH_API_KEY, and for org-scoped keys tenant_id / LANGSMITH_TENANT_ID (sent as X-Tenant-Id).
 ---
 
 # langsmith_tool (Data Source)
 
-Read a LangSmith **platform tool** from the hosted registry (`/v1/platform/tools`). Use either `handle` or `id` as the lookup key (exactly one per block). Requires the same provider authentication as other LangSmith data sources: set `api_key` (or `LANGSMITH_API_KEY`) and, for org-scoped keys, `tenant_id` / `LANGSMITH_TENANT_ID` so the `X-Tenant-Id` header is sent. Tool listing is workspace-scoped per the API; results match an authenticated GET to the same path on the LangSmith API.
+Read a LangSmith **platform tool** from the registry (`GET /v1/platform/tools/{handle}` or `GET /v1/platform/tools/id/{id}`). Specify exactly one of `handle` or `id`. Use the same authentication as other data sources: `api_key` / `LANGSMITH_API_KEY`, and for org-scoped keys `tenant_id` / `LANGSMITH_TENANT_ID` (sent as `X-Tenant-Id`).
 
 ## Example Usage
 
