@@ -59,7 +59,139 @@ Each row is tracked as a separate GitHub issue with label `langsmith-api-gap` (a
 
 Target Linear project (from request): `https://linear.app/team-tyty/project/tsjnsnterraform-langsmith-aa3b8885d64a/overview`
 
-If the Linear integration is unavailable from this environment, use GitHub issues labeled `langsmith-api-gap` as the source of truth, or copy issue titles and descriptions into Linear issues one by one.
+GitHub Issues are disabled on `tsjnsn/terraform-provider-langsmith`, so the items below are written as **ready-to-paste Linear issues** (one issue per gap). Create them in the project above and link each PR to a single issue.
+
+---
+
+### GAP-01 — Platform evaluators
+
+**Title:** Terraform: add `langsmith_evaluator` (platform evaluators API)
+
+**Description:**
+OpenAPI defines `/v1/platform/evaluators` and `/v1/platform/evaluators/{evaluator_id}`. The Terraform provider has no resource or data source for evaluator definitions.
+
+**Acceptance criteria:** Resource and/or data source matching API capabilities; docs in `docs/resources/`; tests mirroring other platform resources.
+
+---
+
+### GAP-02 — Org charts
+
+**Title:** Terraform: support org-level charts (`/api/v1/org-charts`)
+
+**Description:**
+Workspace charts are implemented (`langsmith_chart` using `/api/v1/charts/*`). OpenAPI also lists `/api/v1/org-charts/*` with parallel section/chart flows. Add org-chart resources or document when to use workspace vs org charts.
+
+**Acceptance criteria:** Clear API mapping, provider resources or explicit doc-only scope decision.
+
+---
+
+### GAP-03 — Gateway policies
+
+**Title:** Terraform: add gateway policies (`/v1/platform/gateway-policies`)
+
+**Description:**
+Enterprise-style gateway / routing policy endpoints exist under `/v1/platform/gateway-policies`. No provider coverage today.
+
+**Acceptance criteria:** CRUD aligned with OpenAPI; document required API key scopes.
+
+---
+
+### GAP-04 — Annotation queue reviewers
+
+**Title:** Terraform: annotation queue reviewer assignments
+
+**Description:**
+`/v1/platform/annotation-queues/{queue_id}/reviewers` and `.../reviewers/{identity_id}` manage queue-level reviewers. Distinct from `langsmith_workspace_member`.
+
+**Acceptance criteria:** Resource modeling reviewer list per queue; import support if IDs are stable.
+
+---
+
+### GAP-05 — Workspace TTL settings
+
+**Title:** Terraform: workspace-scoped TTL (`/workspaces/current/ttl-settings`)
+
+**Description:**
+`langsmith_ttl_settings` targets org TTL (`/api/v1/orgs/ttl-settings`). OpenAPI also exposes `/workspaces/current/ttl-settings` and `/api/v1/ttl-settings` for workspace-level configuration.
+
+**Acceptance criteria:** New resource or extend existing with explicit scope; avoid ambiguous defaults.
+
+---
+
+### GAP-06 — Personal access tokens / API keys
+
+**Title:** Terraform: PAT and workspace API key lifecycle
+
+**Description:**
+OpenAPI includes `/api/v1/api-key/*`, `/api/v1/orgs/current/personal-access-tokens/*`, and related routes. Provider covers org `service-keys` but not user PAT flows.
+
+**Acceptance criteria:** Decide Terraform suitability (secrets in state); if implemented, mark sensitive attributes and document rotation.
+
+---
+
+### GAP-07 — Advanced dataset operations
+
+**Title:** Terraform: dataset clone, versions, splits, share, upload-experiment
+
+**Description:**
+Beyond CRUD on `/api/v1/datasets`, OpenAPI includes clone, splits, versions, share, comparative experiments, `upload-experiment`, exports (csv/jsonl), etc.
+
+**Acceptance criteria:** Prioritize sub-features (e.g. splits vs upload-experiment); one resource family or documented out-of-scope with rationale.
+
+---
+
+### GAP-08 — Bulk examples
+
+**Title:** Terraform: bulk example operations
+
+**Description:**
+`/api/v1/examples/bulk`, upload-by-dataset, and validate endpoints support large dataset management. Provider only exposes single-example `langsmith_example`.
+
+**Acceptance criteria:** Optional `langsmith_dataset_examples` import pattern or `examples_json` batch resource; rate-limit considerations in docs.
+
+---
+
+### GAP-09 — Session insights
+
+**Title:** Terraform: project/session insights configs and jobs
+
+**Description:**
+`/api/v1/sessions/{session_id}/insights/*` covers configs, jobs, clusters. Useful for orgs standardizing observability dashboards via IaC.
+
+**Acceptance criteria:** Minimal viable resource set (e.g. config + job trigger) or datasource-only read.
+
+---
+
+### GAP-10 — Audit logs
+
+**Title:** Terraform: `langsmith_audit_logs` data source (read-only)
+
+**Description:**
+`/api/v1/audit-logs` supports compliance export patterns. Read-only data source with filters and pagination is a natural fit.
+
+**Acceptance criteria:** Pagination cursors exposed; document API retention limits.
+
+---
+
+### GAP-11 — Hub environments
+
+**Title:** Terraform: hub environments API
+
+**Description:**
+`/api/v1/hub/environments` and `/{id}` appear in OpenAPI without provider mapping.
+
+**Acceptance criteria:** Confirm product overlap with prompt repos; implement or document deferral.
+
+---
+
+### GAP-12 — Per-run feedback
+
+**Title:** Terraform: run-attached feedback vs feedback configs
+
+**Description:**
+`/api/v1/feedback` and `/api/v1/feedback/{feedback_id}` attach scores to runs. Existing resources cover feedback *configs* and *formulas*, not individual feedback records.
+
+**Acceptance criteria:** Explicit scope (likely narrow: idempotent feedback from CI) or document as intentionally excluded alongside tracing APIs.
 
 ## References
 
