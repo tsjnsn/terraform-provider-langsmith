@@ -4,18 +4,21 @@
 package openapicheck
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"sort"
 	"strings"
 
-	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/analysis"
 )
 
 const clientPkgPath = "github.com/bogware/terraform-provider-langsmith/internal/client"
 
+// ProviderPkgPath is the import path for Terraform provider implementations checked against OpenAPI.
+const ProviderPkgPath = "github.com/bogware/terraform-provider-langsmith/internal/provider"
+
+// Methods on github.com/bogware/terraform-provider-langsmith/internal/client.Client — keep in sync with internal/client/client.go.
 var clientHTTPMethods = map[string]string{
 	"Get":             "GET",
 	"Post":            "POST",
@@ -27,109 +30,79 @@ var clientHTTPMethods = map[string]string{
 	"DeleteWithBody":  "DELETE",
 }
 
-// Usage is one client HTTP call the checker extracted from provider code.
+// Usage is one client HTTP call extracted from provider code.
 type Usage struct {
 	HTTPMethod string
 	Pattern    []Segment
-	Position   token.Position // file:line:col of the CallExpr
+	Pos        token.Pos // CallExpr position for diagnostics
 }
 
-// UnresolvedPathArg records a client call whose path expression could not be
-// analyzed (CI should fail so the call site is made explicit for the contract checker).
+// UnresolvedPathArg records a client call whose path expression could not be analyzed.
 type UnresolvedPathArg struct {
-	Position token.Position
-	Reason   string
+	Pos    token.Pos // path argument expression
+	Reason string
 }
 
-// Extract loads package patterns (e.g. ./internal/provider) and returns all
-// LangSmith client HTTP path usages.
-func Extract(dir string, patterns []string) ([]Usage, []UnresolvedPathArg, error) {
-	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedFiles | packages.NeedSyntax |
-			packages.NeedTypes | packages.NeedTypesInfo | packages.NeedModule | packages.NeedDeps,
-		Dir: dir,
-	}
-	pkgs, err := packages.Load(cfg, patterns...)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load packages: %w", err)
-	}
-	var errs []string
-	for _, p := range pkgs {
-		if len(p.Errors) > 0 {
-			for _, e := range p.Errors {
-				errs = append(errs, e.Error())
-			}
-		}
-	}
-	if len(errs) > 0 {
-		return nil, nil, fmt.Errorf("package load errors:\n%s", strings.Join(errs, "\n"))
-	}
-
+func extractFromPass(pass *analysis.Pass) ([]Usage, []UnresolvedPathArg) {
 	var out []Usage
 	var unresolved []UnresolvedPathArg
-	for _, p := range pkgs {
-		if len(p.Syntax) == 0 {
-			continue
-		}
-		for _, f := range p.Syntax {
-			info := p.TypesInfo
-			for _, decl := range f.Decls {
-				fd, ok := decl.(*ast.FuncDecl)
-				if !ok || fd.Body == nil {
-					continue
-				}
-				ast.Inspect(fd.Body, func(n ast.Node) bool {
-					call, ok := n.(*ast.CallExpr)
-					if !ok {
-						return true
-					}
-					sel, ok := call.Fun.(*ast.SelectorExpr)
-					if !ok {
-						return true
-					}
-					httpMethod, ok := clientHTTPMethods[sel.Sel.Name]
-					if !ok {
-						return true
-					}
-					selTyp := info.TypeOf(sel.X)
-					if !isClientPointer(selTyp) {
-						return true
-					}
-					if len(call.Args) < 2 {
-						return true
-					}
-					pathArg := call.Args[1]
-					patterns, ok := pathPatternsForExpr(fd, pathArg, info)
-					if !ok || len(patterns) == 0 {
-						unresolved = append(unresolved, UnresolvedPathArg{
-							Position: p.Fset.Position(pathArg.Pos()),
-							Reason:   "could not resolve path expression to a static template (string literal, + chain, fmt.Sprintf, or local variable built from those)",
-						})
-						return true
-					}
-					pos := p.Fset.Position(call.Pos())
-					for _, pat := range patterns {
-						out = append(out, Usage{
-							HTTPMethod: httpMethod,
-							Pattern:    pat,
-							Position:   pos,
-						})
-					}
-					return true
-				})
+	info := pass.TypesInfo
+
+	for _, f := range pass.Files {
+		for _, decl := range f.Decls {
+			fd, ok := decl.(*ast.FuncDecl)
+			if !ok || fd.Body == nil {
+				continue
 			}
+			ast.Inspect(fd.Body, func(n ast.Node) bool {
+				call, ok := n.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+				sel, ok := call.Fun.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+				httpMethod, ok := clientHTTPMethods[sel.Sel.Name]
+				if !ok {
+					return true
+				}
+				selTyp := info.TypeOf(sel.X)
+				if !isClientPointer(selTyp) {
+					return true
+				}
+				if len(call.Args) < 2 {
+					return true
+				}
+				pathArg := call.Args[1]
+				patterns, ok := pathPatternsForExpr(fd, pathArg, info)
+				if !ok || len(patterns) == 0 {
+					unresolved = append(unresolved, UnresolvedPathArg{
+						Pos:    pathArg.Pos(),
+						Reason: "could not resolve path expression to a static template (string literal, + chain, fmt.Sprintf, or local variable built from those)",
+					})
+					return true
+				}
+				callPos := call.Pos()
+				for _, pat := range patterns {
+					out = append(out, Usage{
+						HTTPMethod: httpMethod,
+						Pattern:    pat,
+						Pos:        callPos,
+					})
+				}
+				return true
+			})
 		}
 	}
+
 	sort.Slice(out, func(i, j int) bool {
-		if out[i].Position.Filename != out[j].Position.Filename {
-			return out[i].Position.Filename < out[j].Position.Filename
-		}
-		if out[i].Position.Line != out[j].Position.Line {
-			return out[i].Position.Line < out[j].Position.Line
-		}
-		return out[i].Position.Column < out[j].Position.Column
+		return pass.Fset.Position(out[i].Pos).Offset < pass.Fset.Position(out[j].Pos).Offset
 	})
-	return out, unresolved, nil
+	sort.Slice(unresolved, func(i, j int) bool {
+		return pass.Fset.Position(unresolved[i].Pos).Offset < pass.Fset.Position(unresolved[j].Pos).Offset
+	})
+	return out, unresolved
 }
 
 func isClientPointer(t types.Type) bool {
@@ -210,16 +183,19 @@ func patternsForVar(fn *ast.FuncDecl, target *types.Var, info *types.Info) ([][]
 	return out, true
 }
 
-// ValidateUsages checks every usage against the OpenAPI index. On failure it
-// returns errors with file positions and hints.
-func ValidateUsages(idx SpecIndex, usages []Usage) []error {
-	var errs []error
+func reportUnresolved(pass *analysis.Pass, unresolved []UnresolvedPathArg) {
+	for _, u := range unresolved {
+		pass.Reportf(u.Pos, "%s", u.Reason)
+	}
+}
+
+func reportUsageSpecMismatch(pass *analysis.Pass, idx SpecIndex, usages []Usage) {
 nextUsage:
 	for _, u := range usages {
 		pathsForMethod := idx[u.HTTPMethod]
 		if len(pathsForMethod) == 0 {
-			errs = append(errs, fmt.Errorf("%s: %s %s — OpenAPI spec defines no %s operations",
-				u.Position.String(), u.HTTPMethod, formatPattern(u.Pattern), u.HTTPMethod))
+			pass.Reportf(u.Pos, "%s %s — OpenAPI spec defines no %s operations",
+				u.HTTPMethod, formatPattern(u.Pattern), u.HTTPMethod)
 			continue
 		}
 		for specPath := range pathsForMethod {
@@ -228,10 +204,9 @@ nextUsage:
 				continue nextUsage
 			}
 		}
-		errs = append(errs, fmt.Errorf("%s: %s %s — no matching OpenAPI path for this HTTP method (update the provider or refresh the pinned spec)",
-			u.Position.String(), u.HTTPMethod, formatPattern(u.Pattern)))
+		pass.Reportf(u.Pos, "%s %s — no matching OpenAPI path for this HTTP method (update the provider or refresh the pinned spec)",
+			u.HTTPMethod, formatPattern(u.Pattern))
 	}
-	return errs
 }
 
 func formatPattern(p []Segment) string {
