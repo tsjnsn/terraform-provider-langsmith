@@ -21,4 +21,7 @@ test:
 testacc:
 	TF_ACC=1 go test -v -cover -timeout 120m ./...
 
-.PHONY: fmt lint test testacc build install generate
+openapi-check:
+	go run ./cmd/openapi-contract-check -dir .
+
+.PHONY: fmt lint test testacc build install generate openapi-check

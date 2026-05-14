@@ -43,6 +43,28 @@ jobs:
           # Pinned v1.x: repo `.golangci.yml` uses golangci-lint v1 format (see AGENTS.md).
           version: v1.64.8
 
+  openapi-contract:
+    name: OpenAPI contract (used paths)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - name: Verify provider HTTP paths exist in LangSmith OpenAPI
+        env:
+          # Override with a file URL in PRs that need an offline/pinned spec.
+          LANGSMITH_OPENAPI_URL: ${{ vars.LANGSMITH_OPENAPI_URL }}
+        run: |
+          if [ -n "${LANGSMITH_OPENAPI_URL}" ]; then
+            go run ./cmd/openapi-contract-check -dir . -openapi "${LANGSMITH_OPENAPI_URL}"
+          else
+            go run ./cmd/openapi-contract-check -dir .
+          fi
+
   govulncheck:
     name: govulncheck
     runs-on: ubuntu-latest
