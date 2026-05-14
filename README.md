@@ -140,11 +140,13 @@ Override the API URL via `api_url` attribute or `LANGSMITH_API_URL` env var.
 
 ```bash
 make build        # Build the provider
-make test         # Run unit tests
+make test         # Run unit tests (needs `terraform` on PATH; see note below)
 make testacc      # Run acceptance tests (needs LANGSMITH_API_KEY + LANGSMITH_TENANT_ID)
 make lint         # Run golangci-lint
 make generate     # Regenerate docs from schemas + examples
 ```
+
+`make test` uses [terraform-plugin-testing](https://developer.hashicorp.com/terraform/plugin/testing), which runs the Terraform CLI. If Terraform is missing, the helper may try to download a binary and fail with signature errors (e.g. `openpgp: key expired`); install Terraform or set **`TF_ACC_TERRAFORM_PATH`** to your `terraform` executable.
 
 ### Local Development
 
