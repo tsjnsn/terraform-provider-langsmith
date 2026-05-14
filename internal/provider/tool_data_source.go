@@ -156,7 +156,7 @@ func (d *ToolDataSource) ValidateConfig(ctx context.Context, req datasource.Vali
 	}
 	if !handleSet && !idSet {
 		resp.Diagnostics.AddError(
-			"Missing Required Argument",
+			"Missing Required Attribute",
 			"Either \"handle\" or \"id\" must be specified.",
 		)
 	}
@@ -181,7 +181,7 @@ func (d *ToolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 	if !handleSet && !idSet {
 		resp.Diagnostics.AddError(
-			"Missing Required Argument",
+			"Missing Required Attribute",
 			"Either \"handle\" or \"id\" must be specified.",
 		)
 		return
