@@ -63,7 +63,6 @@ func TestAccToolDataSource_byHandle(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -97,7 +96,6 @@ func TestAccToolDataSource_byID(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -127,12 +125,12 @@ func TestAccToolDataSource_validateNeither(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      `data "langsmith_tool" "test" {}`,
-				ExpectError: regexp.MustCompile(`Either "handle" or "id" must be specified`),
+				Config: `data "langsmith_tool" "test" {}`,
+				// Match provider diagnostic summary (see tag_key_data_source) and detail line.
+				ExpectError: regexp.MustCompile(`(?s)Missing Required Attribute.*Either "handle" or "id" must be specified`),
 			},
 		},
 	})
@@ -154,7 +152,6 @@ func TestAccToolDataSource_validateBoth(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -164,7 +161,7 @@ data "langsmith_tool" "test" {
   id     = "550e8400-e29b-41d4-a716-446655440000"
 }
 `,
-				ExpectError: regexp.MustCompile(`(?s)mutually\s+exclusive`),
+				ExpectError: regexp.MustCompile(`(?s)Conflicting Arguments.*mutually\s+exclusive`),
 			},
 		},
 	})
