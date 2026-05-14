@@ -127,6 +127,7 @@ Override the API URL via `api_url` attribute or `LANGSMITH_API_URL` env var.
 | `langsmith_info` | LangSmith server information |
 | `langsmith_organization` | Current organization details |
 | `langsmith_prompt_commit` | Read a specific prompt commit by hash, tag, or `latest` |
+| `langsmith_tool` | Look up a platform registry tool by stable `handle` or `id` |
 
 ## Development
 
