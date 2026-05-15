@@ -60,6 +60,7 @@ func TestAccProjectAgentVersionsDataSource_basic(t *testing.T) {
 			{
 				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.langsmith_project_agent_versions.test", "id", sessionID),
 					resource.TestCheckResourceAttr("data.langsmith_project_agent_versions.test", "session_id", sessionID),
 					resource.TestCheckResourceAttr("data.langsmith_project_agent_versions.test", "agent_versions.#", "2"),
 					resource.TestCheckResourceAttr("data.langsmith_project_agent_versions.test", "agent_versions.0.commit_sha", "deadbeef"),

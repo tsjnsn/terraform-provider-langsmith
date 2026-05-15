@@ -32,6 +32,7 @@ type ProjectAgentVersionsDataSource struct {
 
 // ProjectAgentVersionsDataSourceModel is Terraform state for this data source.
 type ProjectAgentVersionsDataSourceModel struct {
+	ID            types.String `tfsdk:"id"`
 	SessionID     types.String `tfsdk:"session_id"`
 	AgentVersions types.List   `tfsdk:"agent_versions"`
 }
@@ -59,6 +60,10 @@ func (d *ProjectAgentVersionsDataSource) Schema(ctx context.Context, req datasou
 			"(`GET /v1/platform/sessions/{sessionID}/agent-versions`). " +
 			"Use the project UUID from `langsmith_project` as `session_id` for auditing or pinning agent revisions.",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The stable identifier for this data source, set to `session_id`.",
+				Computed:            true,
+			},
 			"session_id": schema.StringAttribute{
 				MarkdownDescription: "The project (tracer session) UUID — the same value as `langsmith_project.id` and other `session_id` arguments in this provider.",
 				Required:            true,
@@ -102,6 +107,10 @@ func (d *ProjectAgentVersionsDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
+	if data.SessionID.IsNull() || data.SessionID.IsUnknown() {
+		resp.Diagnostics.AddError("Missing Required Attribute", "The attribute \"session_id\" must be specified.")
+		return
+	}
 	sessionID := data.SessionID.ValueString()
 	apiPath := "/v1/platform/sessions/" + url.PathEscape(sessionID) + "/agent-versions"
 
@@ -143,6 +152,7 @@ func (d *ProjectAgentVersionsDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
+	data.ID = types.StringValue(sessionID)
 	data.AgentVersions = listVal
 
 	tflog.Trace(ctx, "read project agent versions data source", map[string]interface{}{"session_id": sessionID})
