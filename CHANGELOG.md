@@ -2,6 +2,7 @@
 
 FEATURES:
 
+* **New Resource:** `langsmith_fleet_mcp_server` - Register workspace MCP servers (`/v1/platform/fleet/mcp-servers`)
 * **New Resource:** `langsmith_platform_feature` - Manage per-feature default and disabled models (`/v1/platform/features/*`)
 * **New Data Source:** `langsmith_platform_features` - List consolidated feature model configuration (`GET /v1/platform/features`)
 * **New Data Source:** `langsmith_audit_logs` - List organization audit events (`GET /api/v1/audit-logs`, OCSF API Activity)
