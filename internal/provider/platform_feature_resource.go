@@ -178,6 +178,7 @@ func (r *PlatformFeatureResource) Delete(ctx context.Context, req resource.Delet
 	snap, err := r.readSnapshot(ctx, feature)
 	if err != nil {
 		if client.IsNotFound(err) {
+			resp.State.RemoveResource(ctx)
 			return
 		}
 		resp.Diagnostics.AddError("Error reading platform feature before delete", err.Error())
@@ -197,6 +198,7 @@ func (r *PlatformFeatureResource) Delete(ctx context.Context, req resource.Delet
 		}
 	}
 	tflog.Trace(ctx, "deleted platform feature resource", map[string]any{"feature": feature})
+	resp.State.RemoveResource(ctx)
 }
 
 func (r *PlatformFeatureResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -250,7 +252,7 @@ func (r *PlatformFeatureResource) applyPlan(ctx context.Context, data *PlatformF
 	}
 
 	var wantDisabled []string
-	if data.DisabledModels.IsUnknown() {
+	if data.DisabledModels.IsUnknown() || data.DisabledModels.IsNull() {
 		wantDisabled = sortedStrings(snap.DisabledModels)
 	} else {
 		var elems []string

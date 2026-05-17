@@ -177,6 +177,63 @@ resource "langsmith_platform_feature" "pf" {
 	})
 }
 
+func TestAccPlatformFeatureResource_contract_preserveNullDisabledModels(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/info":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"version":"test"}`))
+			return
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/platform/features":
+			dm := "keep-me"
+			out := []map[string]any{
+				{
+					"feature":         "playground",
+					"default_model":   dm,
+					"disabled_models": []string{"leave-alone"},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(out)
+			return
+		case r.Method == http.MethodDelete && r.URL.Path == "/v1/platform/features/playground/default-model":
+			w.WriteHeader(http.StatusNoContent)
+			return
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/v1/platform/features/playground/disabled-models/"):
+			w.WriteHeader(http.StatusNoContent)
+			return
+		default:
+			http.Error(w, "unexpected "+r.Method+" "+r.URL.Path, http.StatusBadRequest)
+		}
+	}))
+	defer srv.Close()
+
+	t.Setenv("LANGSMITH_API_KEY", "test-key")
+	t.Setenv("LANGSMITH_API_URL", srv.URL)
+
+	cfg := `
+resource "langsmith_platform_feature" "pf" {
+  feature = "playground"
+  disabled_models = null
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("langsmith_platform_feature.pf", "default_model", "keep-me"),
+					resource.TestCheckResourceAttr("langsmith_platform_feature.pf", "disabled_models.#", "1"),
+					resource.TestCheckResourceAttr("langsmith_platform_feature.pf", "disabled_models.0", "leave-alone"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPlatformFeaturesDataSource_contract(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
