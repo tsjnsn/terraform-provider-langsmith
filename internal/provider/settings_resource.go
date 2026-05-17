@@ -177,7 +177,24 @@ func (r *SettingsResource) ImportState(ctx context.Context, req resource.ImportS
 func (r *SettingsResource) applyDesiredHandle(ctx context.Context, data *SettingsResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	desiredHandle := strings.TrimSpace(data.TenantHandle.ValueString())
+	rawDesiredHandle := data.TenantHandle.ValueString()
+	desiredHandle := strings.TrimSpace(rawDesiredHandle)
+	if desiredHandle == "" {
+		diags.AddAttributeError(
+			path.Root("tenant_handle"),
+			"Invalid tenant_handle value",
+			"tenant_handle must contain at least one non-whitespace character.",
+		)
+		return diags
+	}
+	if rawDesiredHandle != desiredHandle {
+		diags.AddAttributeError(
+			path.Root("tenant_handle"),
+			"Invalid tenant_handle value",
+			"tenant_handle must not include leading or trailing whitespace.",
+		)
+		return diags
+	}
 
 	var current settingsTenantAPIResponse
 	if err := r.readSettingsRaw(ctx, &current); err != nil {
