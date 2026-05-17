@@ -2,6 +2,7 @@
 
 FEATURES:
 
+* **New Resource:** `langsmith_annotation_queue_reviewer` - Manage annotation queue reviewer membership (`/v1/platform/annotation-queues/{queue_id}/reviewers`)
 * **New Resource:** `langsmith_org_chart` - Manage organization-scoped custom charts (`/api/v1/org-charts/*`)
 * **New Resource:** `langsmith_org_chart_section` - Manage organization-scoped chart sections
 

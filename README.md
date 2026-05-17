@@ -104,6 +104,7 @@ Override the API URL via `api_url` attribute or `LANGSMITH_API_URL` env var.
 | `langsmith_dataset` | Evaluation datasets |
 | `langsmith_example` | Dataset examples (input/output pairs) |
 | `langsmith_annotation_queue` | Annotation queues for human review |
+| `langsmith_annotation_queue_reviewer` | Platform API reviewer membership on an annotation queue |
 | `langsmith_service_account` | Service accounts (create + delete only) |
 | `langsmith_service_key` | API service keys (create + delete only, key is sensitive) |
 | `langsmith_prompt` | Prompts in the LangSmith Hub (with manifest/content management) |
