@@ -43,22 +43,22 @@ type GatewayPolicyResource struct {
 
 // GatewayPolicyResourceModel is Terraform state for a gateway policy.
 type GatewayPolicyResourceModel struct {
-	ID                types.String  `tfsdk:"id"`
-	Name              types.String  `tfsdk:"name"`
-	Description       types.String  `tfsdk:"description"`
-	PolicyType        types.String  `tfsdk:"policy_type"`
-	Action            types.String  `tfsdk:"action"`
-	SubjectMatchers   types.String  `tfsdk:"subject_matchers"`
-	Config            types.String  `tfsdk:"config"`
-	Enabled           types.Bool    `tfsdk:"enabled"`
-	Priority          types.Int64   `tfsdk:"priority"`
-	OrganizationID    types.String  `tfsdk:"organization_id"`
-	ParentPolicyID    types.String  `tfsdk:"parent_policy_id"`
-	IsSystemGenerated types.Bool    `tfsdk:"is_system_generated"`
-	CurrentSpendUSD   types.Float64 `tfsdk:"current_spend_usd"`
-	CreatedAt         types.String  `tfsdk:"created_at"`
-	UpdatedAt         types.String  `tfsdk:"updated_at"`
-	CreatedBy         types.String  `tfsdk:"created_by"`
+	ID                  types.String  `tfsdk:"id"`
+	Name                types.String  `tfsdk:"name"`
+	Description         types.String  `tfsdk:"description"`
+	PolicyType          types.String  `tfsdk:"policy_type"`
+	Action              types.String  `tfsdk:"action"`
+	SubjectMatchers     types.String  `tfsdk:"subject_matchers"`
+	Config              types.String  `tfsdk:"config"`
+	Enabled             types.Bool    `tfsdk:"enabled"`
+	Priority            types.Int64   `tfsdk:"priority"`
+	OrganizationID      types.String  `tfsdk:"organization_id"`
+	ParentPolicyID      types.String  `tfsdk:"parent_policy_id"`
+	IsSystemGenerated   types.Bool    `tfsdk:"is_system_generated"`
+	CurrentSpendUSD     types.Float64 `tfsdk:"current_spend_usd"`
+	CreatedAt           types.String  `tfsdk:"created_at"`
+	UpdatedAt           types.String  `tfsdk:"updated_at"`
+	CreatedBy           types.String  `tfsdk:"created_by"`
 }
 
 type gatewaySubjectMatcher struct {
@@ -78,32 +78,32 @@ type gatewayPolicyCreateRequest struct {
 }
 
 type gatewayPolicyUpdateRequest struct {
-	Name            *string                 `json:"name,omitempty"`
-	Description     *string                 `json:"description,omitempty"`
-	Action          *string                 `json:"action,omitempty"`
-	SubjectMatchers []gatewaySubjectMatcher `json:"subject_matchers,omitempty"`
-	Config          json.RawMessage         `json:"config,omitempty"`
-	Enabled         *bool                   `json:"enabled,omitempty"`
-	Priority        *int64                  `json:"priority,omitempty"`
+	Name            *string                  `json:"name,omitempty"`
+	Description     *string                  `json:"description,omitempty"`
+	Action          *string                  `json:"action,omitempty"`
+	SubjectMatchers []gatewaySubjectMatcher  `json:"subject_matchers,omitempty"`
+	Config          json.RawMessage          `json:"config,omitempty"`
+	Enabled         *bool                    `json:"enabled,omitempty"`
+	Priority        *int64                   `json:"priority,omitempty"`
 }
 
 type gatewayPolicyRecord struct {
-	ID                string                  `json:"id"`
-	Name              string                  `json:"name"`
-	Description       string                  `json:"description"`
-	PolicyType        string                  `json:"policy_type"`
-	Action            string                  `json:"action"`
-	SubjectMatchers   []gatewaySubjectMatcher `json:"subject_matchers"`
-	Config            json.RawMessage         `json:"config"`
-	Enabled           bool                    `json:"enabled"`
-	Priority          int64                   `json:"priority"`
-	OrganizationID    string                  `json:"organization_id"`
-	ParentPolicyID    *string                 `json:"parent_policy_id"`
-	IsSystemGenerated bool                    `json:"is_system_generated"`
-	CurrentSpendUSD   *float64                `json:"current_spend_usd"`
-	CreatedAt         string                  `json:"created_at"`
-	UpdatedAt         string                  `json:"updated_at"`
-	CreatedBy         string                  `json:"created_by"`
+	ID                  string                  `json:"id"`
+	Name                string                  `json:"name"`
+	Description         string                  `json:"description"`
+	PolicyType          string                  `json:"policy_type"`
+	Action              string                  `json:"action"`
+	SubjectMatchers     []gatewaySubjectMatcher `json:"subject_matchers"`
+	Config              json.RawMessage         `json:"config"`
+	Enabled             bool                    `json:"enabled"`
+	Priority            int64                   `json:"priority"`
+	OrganizationID      string                  `json:"organization_id"`
+	ParentPolicyID      *string                 `json:"parent_policy_id"`
+	IsSystemGenerated   bool                    `json:"is_system_generated"`
+	CurrentSpendUSD     *float64                `json:"current_spend_usd"`
+	CreatedAt           string                  `json:"created_at"`
+	UpdatedAt           string                  `json:"updated_at"`
+	CreatedBy           string                  `json:"created_by"`
 }
 
 func (r *GatewayPolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
