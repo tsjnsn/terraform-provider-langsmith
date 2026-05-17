@@ -27,8 +27,9 @@ import (
 const fleetMCPServersAPIPath = "/v1/platform/fleet/mcp-servers"
 
 var (
-	_ resource.Resource                = &FleetMCPServerResource{}
-	_ resource.ResourceWithImportState = &FleetMCPServerResource{}
+	_ resource.Resource                   = &FleetMCPServerResource{}
+	_ resource.ResourceWithImportState    = &FleetMCPServerResource{}
+	_ resource.ResourceWithValidateConfig = &FleetMCPServerResource{}
 )
 
 // NewFleetMCPServerResource returns a resource for workspace MCP server
@@ -206,6 +207,16 @@ func (r *FleetMCPServerResource) Configure(ctx context.Context, req resource.Con
 	r.client = c
 }
 
+func (r *FleetMCPServerResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data FleetMCPServerResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(validateFleetMCPServerConfig(&data)...)
+}
+
 func (r *FleetMCPServerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan FleetMCPServerResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -238,8 +249,8 @@ func (r *FleetMCPServerResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	var rec mcpServerAPI
-	path := fleetMCPServersAPIPath + "/" + url.PathEscape(data.ID.ValueString())
-	if err := r.client.Get(ctx, path, nil, &rec); err != nil {
+	apiPath := fleetMCPServersAPIPath + "/" + url.PathEscape(data.ID.ValueString())
+	if err := r.client.Get(ctx, apiPath, nil, &rec); err != nil {
 		if client.IsNotFound(err) {
 			resp.State.RemoveResource(ctx)
 			return
@@ -259,7 +270,13 @@ func (r *FleetMCPServerResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	body, diags := buildUpdateMcpServerPayload(&plan)
+	var state FleetMCPServerResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	body, diags := buildUpdateMcpServerPayload(&plan, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -336,24 +353,29 @@ func buildCreateMcpServerPayload(data *FleetMCPServerResourceModel) (createMcpSe
 	return body, diags
 }
 
-func buildUpdateMcpServerPayload(data *FleetMCPServerResourceModel) (map[string]interface{}, diag.Diagnostics) {
+func buildUpdateMcpServerPayload(plan, state *FleetMCPServerResourceModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	patch := map[string]interface{}{
-		"url": data.URL.ValueString(),
+	patch := map[string]interface{}{}
+	if !plan.URL.Equal(state.URL) {
+		patch["url"] = plan.URL.ValueString()
 	}
-	if !data.AuthType.IsNull() {
-		patch["auth_type"] = data.AuthType.ValueString()
+	if !plan.AuthType.Equal(state.AuthType) {
+		patch["auth_type"] = stringValueOrNil(plan.AuthType)
 	}
-	if !data.OAuthProviderID.IsNull() {
-		patch["oauth_provider_id"] = data.OAuthProviderID.ValueString()
+	if !plan.OAuthProviderID.Equal(state.OAuthProviderID) {
+		patch["oauth_provider_id"] = stringValueOrNil(plan.OAuthProviderID)
 	}
-	if !data.Headers.IsNull() {
-		raw := json.RawMessage(data.Headers.ValueString())
-		if err := validateHeadersJSON(raw); err != nil {
-			diags.AddError("Invalid headers JSON", err.Error())
-			return nil, diags
+	if !plan.Headers.Equal(state.Headers) {
+		if plan.Headers.IsNull() {
+			patch["headers"] = nil
+		} else {
+			raw := json.RawMessage(plan.Headers.ValueString())
+			if err := validateHeadersJSON(raw); err != nil {
+				diags.AddError("Invalid headers JSON", err.Error())
+				return nil, diags
+			}
+			patch["headers"] = raw
 		}
-		patch["headers"] = raw
 	}
 	return patch, diags
 }
@@ -403,7 +425,7 @@ func mapMcpServerAPIToModel(api *mcpServerAPI, data *FleetMCPServerResourceModel
 	} else {
 		data.OAuthProviderID = types.StringNull()
 	}
-	data.Headers = jsonStringValue(api.Headers)
+	data.Headers = jsonStringValuePreservingEquivalent(api.Headers, data.Headers)
 	if api.CanInvoke != nil {
 		data.CanInvoke = types.BoolValue(*api.CanInvoke)
 	} else {
@@ -424,4 +446,103 @@ func mapMcpServerAPIToModel(api *mcpServerAPI, data *FleetMCPServerResourceModel
 	} else {
 		data.UpdatedAt = types.StringNull()
 	}
+}
+
+func validateFleetMCPServerConfig(data *FleetMCPServerResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	authType, authTypeSet := knownStringValue(data.AuthType)
+	_, oauthProviderSet := knownStringValue(data.OAuthProviderID)
+	_, oauthModeSet := knownStringValue(data.OAuthMode)
+	_, headersSet := knownStringValue(data.Headers)
+
+	switch authType {
+	case "oauth":
+		if !oauthProviderSet {
+			diags.AddAttributeError(
+				path.Root("oauth_provider_id"),
+				"Missing oauth_provider_id for oauth auth_type",
+				`Set "oauth_provider_id" when "auth_type" is "oauth".`,
+			)
+		}
+		if headersSet {
+			diags.AddAttributeError(
+				path.Root("headers"),
+				"Invalid headers for oauth auth_type",
+				`Do not set "headers" when "auth_type" is "oauth".`,
+			)
+		}
+	case "headers":
+		if !headersSet {
+			diags.AddAttributeError(
+				path.Root("headers"),
+				"Missing headers for headers auth_type",
+				`Set "headers" when "auth_type" is "headers".`,
+			)
+		}
+		if oauthProviderSet {
+			diags.AddAttributeError(
+				path.Root("oauth_provider_id"),
+				"Invalid oauth_provider_id for headers auth_type",
+				`Do not set "oauth_provider_id" when "auth_type" is "headers".`,
+			)
+		}
+		if oauthModeSet {
+			diags.AddAttributeError(
+				path.Root("oauth_mode"),
+				"Invalid oauth_mode for headers auth_type",
+				`Do not set "oauth_mode" when "auth_type" is "headers".`,
+			)
+		}
+	default:
+		if !authTypeSet {
+			if oauthProviderSet {
+				diags.AddAttributeError(
+					path.Root("oauth_provider_id"),
+					"Missing auth_type for oauth_provider_id",
+					`Set "auth_type" to "oauth" when "oauth_provider_id" is configured.`,
+				)
+			}
+			if oauthModeSet {
+				diags.AddAttributeError(
+					path.Root("oauth_mode"),
+					"Missing auth_type for oauth_mode",
+					`Set "auth_type" to "oauth" when "oauth_mode" is configured.`,
+				)
+			}
+			if headersSet {
+				diags.AddAttributeError(
+					path.Root("headers"),
+					"Missing auth_type for headers",
+					`Set "auth_type" to "headers" when "headers" is configured.`,
+				)
+			}
+		}
+	}
+
+	return diags
+}
+
+func knownStringValue(v types.String) (string, bool) {
+	if v.IsNull() || v.IsUnknown() {
+		return "", false
+	}
+	return v.ValueString(), true
+}
+
+func stringValueOrNil(v types.String) interface{} {
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	}
+	return v.ValueString()
+}
+
+func jsonStringValuePreservingEquivalent(raw json.RawMessage, saved types.String) types.String {
+	if len(raw) == 0 || string(raw) == "null" {
+		return types.StringNull()
+	}
+	if !saved.IsNull() && !saved.IsUnknown() && normalizeJSON(saved.ValueString()) == normalizeJSON(string(raw)) {
+		return saved
+	}
+	return jsonStringValue(raw)
 }
