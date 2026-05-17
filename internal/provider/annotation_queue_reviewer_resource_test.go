@@ -97,14 +97,19 @@ func testAccFirstWorkspaceMemberIdentityID(t *testing.T) string {
 }
 
 func TestAccAnnotationQueueReviewerResource_basic(t *testing.T) {
+	// Resolve identity_id before building TestStep Config strings. PreCheck runs
+	// after the TestCase struct is built, so a closure cannot fix an empty
+	// identity captured into Config at construction time.
+	testAccPreCheck(t)
+	testAccPreCheckAnnotationQueueReviewersAPI(t)
+	identityID := testAccFirstWorkspaceMemberIdentityID(t)
+
 	rName := fmt.Sprintf("tf-acc-aqr-%s", acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
-	identityID := ""
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 			testAccPreCheckAnnotationQueueReviewersAPI(t)
-			identityID = testAccFirstWorkspaceMemberIdentityID(t)
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		CheckDestroy:             func(*terraform.State) error { return nil },
