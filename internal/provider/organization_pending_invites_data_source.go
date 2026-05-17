@@ -29,8 +29,8 @@ type OrganizationPendingInvitesDataSource struct {
 
 // OrganizationPendingInvitesDataSourceModel is Terraform state for GET /api/v1/orgs/pending.
 type OrganizationPendingInvitesDataSourceModel struct {
-	ID      types.String `tfsdk:"id"`
-	Pending types.List   `tfsdk:"pending"`
+	ID             types.String `tfsdk:"id"`
+	PendingInvites types.List   `tfsdk:"pending_invites"`
 }
 
 func (d *OrganizationPendingInvitesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -47,7 +47,7 @@ func (d *OrganizationPendingInvitesDataSource) Schema(ctx context.Context, req d
 				MarkdownDescription: "Stable placeholder (`organization_pending_invites`).",
 				Computed:            true,
 			},
-			"pending": schema.ListNestedAttribute{
+			"pending_invites": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: organizationPGSlimNestedAttributes(),
@@ -93,7 +93,7 @@ func (d *OrganizationPendingInvitesDataSource) Read(ctx context.Context, req dat
 	}
 
 	data.ID = types.StringValue("organization_pending_invites")
-	data.Pending = pendingList
+	data.PendingInvites = pendingList
 	tflog.Trace(ctx, "read organization_pending_invites data source", map[string]any{"count": len(rows)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

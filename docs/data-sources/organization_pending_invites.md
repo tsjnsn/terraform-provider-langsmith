@@ -16,7 +16,7 @@ Lists **pending organization invitations** via GET [`/api/v1/orgs/pending`](http
 data "langsmith_organization_pending_invites" "pending" {}
 
 output "pending_org_ids" {
-  value = [for o in data.langsmith_organization_pending_invites.pending.pending : o.id]
+  value = [for o in data.langsmith_organization_pending_invites.pending.pending_invites : o.id]
 }
 ```
 
@@ -26,10 +26,10 @@ output "pending_org_ids" {
 ### Read-Only
 
 - `id` (String) Stable placeholder (`organization_pending_invites`).
-- `pending` (Attributes List) Pending invites, sorted by organization `id` for stable Terraform state. (see [below for nested schema](#nestedatt--pending))
+- `pending_invites` (Attributes List) Pending invites, sorted by organization `id` for stable Terraform state. (see [below for nested schema](#nestedatt--pending_invites))
 
-<a id="nestedatt--pending"></a>
-### Nested Schema for `pending`
+<a id="nestedatt--pending_invites"></a>
+### Nested Schema for `pending_invites`
 
 Read-Only:
 

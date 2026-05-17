@@ -205,11 +205,11 @@ func optionalInt64FromInt(p *int) types.Int64 {
 func organizationPGSlimObjectValue(row *organizationPGSchemaSlimAPI) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ip := sortedStrings(row.IpAllowlist)
+	ip := sortedStringsPreserveDuplicates(row.IpAllowlist)
 	ipList, d := types.ListValue(types.StringType, stringSliceToAttrValues(ip))
 	diags.Append(d...)
 
-	urls := sortedStrings(row.LlmAuthProxyAllowedURLs)
+	urls := sortedStringsPreserveDuplicates(row.LlmAuthProxyAllowedURLs)
 	urlList, d2 := types.ListValue(types.StringType, stringSliceToAttrValues(urls))
 	diags.Append(d2...)
 
@@ -267,4 +267,10 @@ func organizationPGSlimListValue(rows []organizationPGSchemaSlimAPI) (types.List
 	list, ldiags := types.ListValue(types.ObjectType{AttrTypes: organizationPGSlimRowAttrTypes}, elems)
 	diags.Append(ldiags...)
 	return list, diags
+}
+
+func sortedStringsPreserveDuplicates(in []string) []string {
+	out := append([]string(nil), in...)
+	sort.Strings(out)
+	return out
 }

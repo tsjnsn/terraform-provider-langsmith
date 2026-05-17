@@ -4,7 +4,6 @@
 package provider
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,25 +12,7 @@ import (
 )
 
 func TestAccOrganizationsDataSource_contract(t *testing.T) {
-	orgPayload := []organizationPGSchemaSlimAPI{
-		{
-			ID:          "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-			DisplayName: "Beta Org",
-			Tier:        ptrStr("enterprise"),
-			IsPersonal:  false,
-			Disabled:    false,
-			IpAllowlist: []string{"10.0.0.0/8", "192.168.0.0/16"},
-		},
-		{
-			ID:             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-			DisplayName:    "Alpha Org",
-			Tier:           ptrStr("plus"),
-			IsPersonal:     true,
-			Disabled:       false,
-			SsoOnly:        ptrBool(true),
-			InvitesEnabled: ptrBool(false),
-		},
-	}
+	orgPayload := `[{"id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","display_name":"Beta Org","tier":"enterprise","is_personal":false,"disabled":false,"ip_allowlist":["10.0.0.0/8","192.168.0.0/16","10.0.0.0/8"]},{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","display_name":"Alpha Org","tier":"plus","is_personal":true,"disabled":false,"sso_only":true,"invites_enabled":false}]`
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -41,7 +22,7 @@ func TestAccOrganizationsDataSource_contract(t *testing.T) {
 			return
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/orgs":
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(orgPayload)
+			_, _ = w.Write([]byte(orgPayload))
 			return
 		default:
 			http.Error(w, "not found: "+r.Method+" "+r.URL.Path, http.StatusNotFound)
@@ -71,9 +52,10 @@ func TestAccOrganizationsDataSource_contract(t *testing.T) {
 					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.0.sso_only", "true"),
 					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.0.invites_enabled", "false"),
 					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.id", "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.#", "2"),
+					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.#", "3"),
 					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.0", "10.0.0.0/8"),
-					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.1", "192.168.0.0/16"),
+					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.1", "10.0.0.0/8"),
+					resource.TestCheckResourceAttr("data.langsmith_organizations.o", "organizations.1.ip_allowlist.2", "192.168.0.0/16"),
 				),
 			},
 		},
@@ -81,14 +63,7 @@ func TestAccOrganizationsDataSource_contract(t *testing.T) {
 }
 
 func TestAccOrganizationPendingInvitesDataSource_contract(t *testing.T) {
-	pendingPayload := []organizationPGSchemaSlimAPI{
-		{
-			ID:          "cccccccc-cccc-cccc-cccc-cccccccccccc",
-			DisplayName: "Invited Org",
-			IsPersonal:  false,
-			Disabled:    false,
-		},
-	}
+	pendingPayload := `[{"id":"cccccccc-cccc-cccc-cccc-cccccccccccc","display_name":"Invited Org","is_personal":false,"disabled":false}]`
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -98,7 +73,7 @@ func TestAccOrganizationPendingInvitesDataSource_contract(t *testing.T) {
 			return
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/orgs/pending":
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(pendingPayload)
+			_, _ = w.Write([]byte(pendingPayload))
 			return
 		default:
 			http.Error(w, "not found: "+r.Method+" "+r.URL.Path, http.StatusNotFound)
@@ -120,8 +95,8 @@ func TestAccOrganizationPendingInvitesDataSource_contract(t *testing.T) {
 				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.langsmith_organization_pending_invites.p", "id", "organization_pending_invites"),
-					resource.TestCheckResourceAttr("data.langsmith_organization_pending_invites.p", "pending.#", "1"),
-					resource.TestCheckResourceAttr("data.langsmith_organization_pending_invites.p", "pending.0.display_name", "Invited Org"),
+					resource.TestCheckResourceAttr("data.langsmith_organization_pending_invites.p", "pending_invites.#", "1"),
+					resource.TestCheckResourceAttr("data.langsmith_organization_pending_invites.p", "pending_invites.0.display_name", "Invited Org"),
 				),
 			},
 		},
@@ -129,10 +104,7 @@ func TestAccOrganizationPendingInvitesDataSource_contract(t *testing.T) {
 }
 
 func TestAccOrganizationPermissionsDataSource_contract(t *testing.T) {
-	permPayload := []permissionResponseAPI{
-		{Name: "workspace:read", Description: "Read workspace", AccessScope: "workspace"},
-		{Name: "organization:admin", Description: "Org admin", AccessScope: "organization"},
-	}
+	permPayload := `[{"name":"workspace:read","description":"Read workspace","access_scope":"workspace"},{"name":"organization:admin","description":"Org admin","access_scope":"organization"}]`
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -142,7 +114,7 @@ func TestAccOrganizationPermissionsDataSource_contract(t *testing.T) {
 			return
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/orgs/permissions":
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(permPayload)
+			_, _ = w.Write([]byte(permPayload))
 			return
 		default:
 			http.Error(w, "not found: "+r.Method+" "+r.URL.Path, http.StatusNotFound)
@@ -174,6 +146,3 @@ func TestAccOrganizationPermissionsDataSource_contract(t *testing.T) {
 		},
 	})
 }
-
-func ptrStr(s string) *string { return &s }
-func ptrBool(b bool) *bool    { return &b }
