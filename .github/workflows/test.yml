@@ -71,7 +71,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: make generate
@@ -96,7 +96,7 @@ jobs:
       # terraform-plugin-testing shells out to Terraform; without a binary on PATH
       # it falls back to hc-install + release checksum verification (can fail when
       # Hashicorp's signing key material is stale in transitive deps).
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: go mod download
@@ -117,9 +117,6 @@ jobs:
           files: coverage.out
           flags: unit
           fail_ci_if_error: true
-          # Avoid flaky failures when the action cannot import/verify the Codecov CLI
-          # signing key on the runner (GPG "No public key" / empty key material).
-          skip_validation: true
           name: unit
 
   # Catches data races in provider and client code. Keep ./... unless a package
@@ -135,7 +132,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: go mod download
@@ -152,7 +149,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: go mod download

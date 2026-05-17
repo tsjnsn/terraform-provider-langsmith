@@ -28,6 +28,7 @@ data "langsmith_project_agent_versions" "example" {
 ### Read-Only
 
 - `agent_versions` (Attributes List) Versions observed for this session (`tracer_sessions.AgentVersionResponse` items from the API). (see [below for nested schema](#nestedatt--agent_versions))
+- `id` (String) The stable identifier for this data source, set to `session_id`.
 
 <a id="nestedatt--agent_versions"></a>
 ### Nested Schema for `agent_versions`
