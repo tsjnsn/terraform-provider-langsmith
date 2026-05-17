@@ -97,15 +97,17 @@ func testAccFirstWorkspaceMemberIdentityID(t *testing.T) string {
 }
 
 func TestAccAnnotationQueueReviewerResource_basic(t *testing.T) {
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("set TF_ACC to run acceptance tests")
+	}
+
 	rName := fmt.Sprintf("tf-acc-aqr-%s", acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
-	identityID := ""
+
+	testAccPreCheck(t)
+	testAccPreCheckAnnotationQueueReviewersAPI(t)
+	identityID := testAccFirstWorkspaceMemberIdentityID(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-			testAccPreCheckAnnotationQueueReviewersAPI(t)
-			identityID = testAccFirstWorkspaceMemberIdentityID(t)
-		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		CheckDestroy:             func(*terraform.State) error { return nil },
 		Steps: []resource.TestStep{
