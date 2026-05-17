@@ -85,7 +85,7 @@ type updateEvaluatorAPIResponse struct {
 type evaluatorCreateRequest struct {
 	Name          string          `json:"name"`
 	Type          string          `json:"type"`
-	LLMEvaluator  json.RawMessage  `json:"llm_evaluator,omitempty"`
+	LLMEvaluator  json.RawMessage `json:"llm_evaluator,omitempty"`
 	CodeEvaluator json.RawMessage `json:"code_evaluator,omitempty"`
 }
 
@@ -198,16 +198,21 @@ func (r *EvaluatorResource) Create(ctx context.Context, req resource.CreateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	llmRaw, codeRaw, diags := validateEvaluatorPlan(plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	body := evaluatorCreateRequest{
 		Name: plan.Name.ValueString(),
 		Type: plan.Type.ValueString(),
 	}
-	if raw, ok := rawJSONFromTF(plan.LLMEvaluator); ok {
-		body.LLMEvaluator = raw
+	if len(llmRaw) > 0 {
+		body.LLMEvaluator = llmRaw
 	}
-	if raw, ok := rawJSONFromTF(plan.CodeEvaluator); ok {
-		body.CodeEvaluator = raw
+	if len(codeRaw) > 0 {
+		body.CodeEvaluator = codeRaw
 	}
 
 	var wrap createEvaluatorAPIResponse
@@ -216,7 +221,7 @@ func (r *EvaluatorResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	diags := applyEvaluatorAPIToModel(&wrap.Evaluator, plan.DeleteRunRules, &plan)
+	diags = applyEvaluatorAPIToModel(&wrap.Evaluator, plan.DeleteRunRules, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -262,19 +267,20 @@ func (r *EvaluatorResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	llmRaw, codeRaw, diags := validateEvaluatorPlan(plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	patch := evaluatorPatchRequest{
 		Name: stringPtr(plan.Name.ValueString()),
 	}
-	if raw, ok := rawJSONFromTF(plan.LLMEvaluator); ok {
-		if !evaluatorJSONAttrEqual(state.LLMEvaluator, plan.LLMEvaluator) {
-			patch.LLMEvaluator = raw
-		}
+	if len(llmRaw) > 0 && !evaluatorJSONAttrEqual(state.LLMEvaluator, plan.LLMEvaluator) {
+		patch.LLMEvaluator = llmRaw
 	}
-	if raw, ok := rawJSONFromTF(plan.CodeEvaluator); ok {
-		if !evaluatorJSONAttrEqual(state.CodeEvaluator, plan.CodeEvaluator) {
-			patch.CodeEvaluator = raw
-		}
+	if len(codeRaw) > 0 && !evaluatorJSONAttrEqual(state.CodeEvaluator, plan.CodeEvaluator) {
+		patch.CodeEvaluator = codeRaw
 	}
 
 	var wrap updateEvaluatorAPIResponse
@@ -283,7 +289,7 @@ func (r *EvaluatorResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	diags := applyEvaluatorAPIToModel(&wrap.Evaluator, plan.DeleteRunRules, &plan)
+	diags = applyEvaluatorAPIToModel(&wrap.Evaluator, plan.DeleteRunRules, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -302,7 +308,7 @@ func (r *EvaluatorResource) Delete(ctx context.Context, req resource.DeleteReque
 
 	path := evaluatorDetailPath(data.ID.ValueString())
 	var err error
-	if !data.DeleteRunRules.IsNull() && data.DeleteRunRules.ValueBool() {
+	if !data.DeleteRunRules.IsNull() && !data.DeleteRunRules.IsUnknown() && data.DeleteRunRules.ValueBool() {
 		q := url.Values{}
 		q.Set("delete_run_rules", "true")
 		err = r.client.DeleteWithQuery(ctx, path, q)
@@ -340,15 +346,68 @@ func evaluatorJSONAttrEqual(state, plan types.String) bool {
 	}
 }
 
-func rawJSONFromTF(s types.String) (json.RawMessage, bool) {
+func validateEvaluatorPlan(plan EvaluatorResourceModel) (json.RawMessage, json.RawMessage, diag.Diagnostics) {
+	llmRaw, llmSet, diags := parseEvaluatorJSONAttribute(plan.LLMEvaluator, "llm_evaluator")
+	codeRaw, codeSet, codeDiags := parseEvaluatorJSONAttribute(plan.CodeEvaluator, "code_evaluator")
+	diags.Append(codeDiags...)
+	switch plan.Type.ValueString() {
+	case "llm":
+		if !llmSet {
+			diags.AddAttributeError(
+				path.Root("llm_evaluator"),
+				"Missing llm_evaluator for type llm",
+				`Set "llm_evaluator" to a non-empty valid JSON object when "type" is "llm".`,
+			)
+		}
+		if codeSet {
+			diags.AddAttributeError(
+				path.Root("code_evaluator"),
+				"Invalid code_evaluator for type llm",
+				`Remove "code_evaluator" when "type" is "llm".`,
+			)
+		}
+	case "code":
+		if !codeSet {
+			diags.AddAttributeError(
+				path.Root("code_evaluator"),
+				"Missing code_evaluator for type code",
+				`Set "code_evaluator" to a non-empty valid JSON object when "type" is "code".`,
+			)
+		}
+		if llmSet {
+			diags.AddAttributeError(
+				path.Root("llm_evaluator"),
+				"Invalid llm_evaluator for type code",
+				`Remove "llm_evaluator" when "type" is "code".`,
+			)
+		}
+	}
+	return llmRaw, codeRaw, diags
+}
+
+func parseEvaluatorJSONAttribute(s types.String, attr string) (json.RawMessage, bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	if s.IsNull() || s.IsUnknown() {
-		return nil, false
+		return nil, false, diags
 	}
 	v := strings.TrimSpace(s.ValueString())
 	if v == "" {
-		return nil, false
+		diags.AddAttributeError(
+			path.Root(attr),
+			"Invalid JSON value",
+			fmt.Sprintf(`"%s" must be non-empty valid JSON.`, attr),
+		)
+		return nil, false, diags
 	}
-	return json.RawMessage(v), true
+	if !json.Valid([]byte(v)) {
+		diags.AddAttributeError(
+			path.Root(attr),
+			"Invalid JSON value",
+			fmt.Sprintf(`"%s" must be valid JSON.`, attr),
+		)
+		return nil, false, diags
+	}
+	return json.RawMessage(v), true, diags
 }
 
 func applyEvaluatorAPIToModel(ev *evaluatorAPI, deleteRunRules types.Bool, dst *EvaluatorResourceModel) diag.Diagnostics {
