@@ -98,7 +98,7 @@ func testAccFirstWorkspaceMemberIdentityID(t *testing.T) string {
 
 func TestAccAnnotationQueueReviewerResource_basic(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
-		t.Skip("set TF_ACC to run acceptance tests")
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
 	}
 
 	rName := fmt.Sprintf("tf-acc-aqr-%s", acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
