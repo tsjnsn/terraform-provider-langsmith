@@ -151,10 +151,18 @@ func (d *AuditLogsDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
+	if data.StartTime.IsNull() || data.StartTime.IsUnknown() || data.EndTime.IsNull() || data.EndTime.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"The attributes \"start_time\" and \"end_time\" must be specified.",
+		)
+		return
+	}
+
 	start := strings.TrimSpace(data.StartTime.ValueString())
 	end := strings.TrimSpace(data.EndTime.ValueString())
 	if start == "" || end == "" {
-		resp.Diagnostics.AddError("Invalid time range", "start_time and end_time must be non-empty ISO 8601 timestamps.")
+		resp.Diagnostics.AddError("Missing Required Attribute", "The attributes \"start_time\" and \"end_time\" must be non-empty ISO 8601 timestamps.")
 		return
 	}
 
@@ -189,12 +197,18 @@ func (d *AuditLogsDataSource) Read(ctx context.Context, req datasource.ReadReque
 		limitPtr = &limit
 	}
 
-	workspaceID := strings.TrimSpace(data.WorkspaceID.ValueString())
+	workspaceID := ""
+	if !data.WorkspaceID.IsNull() && !data.WorkspaceID.IsUnknown() {
+		workspaceID = strings.TrimSpace(data.WorkspaceID.ValueString())
+	}
 	if workspaceID != "" {
 		q.Set("workspace_id", workspaceID)
 	}
 
-	cursorIn := strings.TrimSpace(data.Cursor.ValueString())
+	cursorIn := ""
+	if !data.Cursor.IsNull() && !data.Cursor.IsUnknown() {
+		cursorIn = strings.TrimSpace(data.Cursor.ValueString())
+	}
 	if cursorIn != "" {
 		q.Set("cursor", cursorIn)
 	}
