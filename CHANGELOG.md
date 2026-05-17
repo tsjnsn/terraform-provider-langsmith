@@ -2,6 +2,9 @@
 
 FEATURES:
 
+* **New Data Source:** `langsmith_organizations` - List organizations visible to the caller (`GET /api/v1/orgs`)
+* **New Data Source:** `langsmith_organization_permissions` - List permission catalog entries (`GET /api/v1/orgs/permissions`)
+* **New Data Source:** `langsmith_organization_pending_invites` - List pending organization invitations (`GET /api/v1/orgs/pending`)
 * **New Resource:** `langsmith_platform_feature` - Manage per-feature default and disabled models (`/v1/platform/features/*`)
 * **New Data Source:** `langsmith_platform_features` - List consolidated feature model configuration (`GET /v1/platform/features`)
 * **New Data Source:** `langsmith_audit_logs` - List organization audit events (`GET /api/v1/audit-logs`, OCSF API Activity)
@@ -21,6 +24,7 @@ ENHANCEMENTS:
 
 NOTES:
 
+* **Organization APIs:** `PATCH /api/v1/orgs/members/basic` (current-user password or display name) is not exposed in Terraform because it is an interactive credential surface rather than infrastructure state.
 * **New Data Source:** `langsmith_sso_settings_by_slug` reads `GET /api/v1/sso/settings/{sso_login_slug}` (OpenAPI `SSOProviderSlim` list). README and `langsmith_sso_settings` schema text now map org SSO routes vs interactive `/api/v1/sso/*` flows.
 * CI uploads unit-test coverage to Codecov with path-based minimum coverage checks for `internal/provider` and `internal/client`.
 * Codecov uploads use **GitHub Actions OIDC** (`id-token: write`, `use_oidc`) when the upload step runs; fork PRs skip upload (no token/OIDC path).
