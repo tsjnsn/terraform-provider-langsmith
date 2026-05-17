@@ -34,7 +34,7 @@ func TestParseAnnotationQueueReviewerImportID(t *testing.T) {
 
 // testAccPreCheckAnnotationQueueReviewersAPI skips when the platform reviewer API
 // is not available for this credential (for example 403 on self-hosted or
-// restricted keys).
+// restricted keys) or when the deployment does not expose the route (405).
 func testAccPreCheckAnnotationQueueReviewersAPI(t *testing.T) {
 	t.Helper()
 	ctx := context.Background()
@@ -54,11 +54,13 @@ func testAccPreCheckAnnotationQueueReviewersAPI(t *testing.T) {
 	err := c.Get(ctx, "/v1/platform/annotation-queues/00000000-0000-4000-8000-000000000001/reviewers/00000000-0000-4000-8000-000000000002", nil, &probe)
 	if err != nil {
 		var apiErr *client.APIError
-		if errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusForbidden || apiErr.StatusCode == http.StatusUnauthorized) {
-			t.Skipf("annotation queue reviewers API returned %d; skipping acceptance test", apiErr.StatusCode)
-		}
-		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
-			return
+		if errors.As(err, &apiErr) {
+			switch apiErr.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden, http.StatusMethodNotAllowed:
+				t.Skipf("annotation queue reviewers API returned %d; skipping acceptance test", apiErr.StatusCode)
+			case http.StatusNotFound:
+				return
+			}
 		}
 		t.Fatalf("annotation queue reviewers API pre-check: %v", err)
 	}
