@@ -56,6 +56,7 @@ FEATURES:
 * **New Data Source:** `langsmith_project_agent_versions` - Agent deployment versions for a project
 * **New Data Source:** `langsmith_sso_settings_by_slug` - Resolve SSO providers for a login slug (`GET /api/v1/sso/settings/{sso_login_slug}`)
 * **New Data Source:** `langsmith_feedback_ingest_tokens` - List ingest tokens for a run (`GET /api/v1/feedback/tokens`)
+* **New Data Source:** `langsmith_datasets` - List datasets in the workspace (`GET /api/v1/datasets`)
 
 ENHANCEMENTS:
 

@@ -218,6 +218,7 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 | `langsmith_project` | Look up a project by name or ID |
 | `langsmith_project_agent_versions` | Agent deployment versions for a project |
 | `langsmith_dataset` | Look up a dataset by name or ID |
+| `langsmith_datasets` | List datasets in the workspace (`GET /api/v1/datasets`) |
 | `langsmith_annotation_queue` | Look up an annotation queue by name or ID |
 | `langsmith_prompt` | Look up a prompt repo by handle |
 | `langsmith_prompt_commit` | Read a specific prompt commit by hash, tag, or `latest` |
