@@ -68,7 +68,8 @@ func (r *ChartSectionResource) Metadata(ctx context.Context, req resource.Metada
 
 func (r *ChartSectionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a LangSmith custom chart section (dashboard section).",
+		MarkdownDescription: "Manages a LangSmith workspace-scoped chart section (`/api/v1/charts/*`). " +
+			"The section clone endpoint (`POST /api/v1/charts/section/clone`) is not represented as a Terraform resource.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The unique identifier of the chart section.",
@@ -185,8 +186,13 @@ func (r *ChartSectionResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// Preserve created_at from plan; UseStateForUnknown means it should not change.
-	savedCreatedAt := data.CreatedAt
+	var prior ChartSectionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	savedCreatedAt := prior.CreatedAt
+	savedUpdatedAt := prior.UpdatedAt
 
 	body := chartSectionUpdateRequest{}
 	setOptionalString(&body.Title, data.Title)
@@ -205,6 +211,7 @@ func (r *ChartSectionResource) Update(ctx context.Context, req resource.UpdateRe
 
 	mapChartSectionResponseToState(&data, &result)
 	data.CreatedAt = savedCreatedAt
+	restoreChartSectionUpdatedAtFromPrior(&data, savedUpdatedAt)
 	tflog.Trace(ctx, "updated chart section resource", map[string]interface{}{"id": result.ID})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -239,5 +246,11 @@ func mapChartSectionResponseToState(data *ChartSectionResourceModel, result *cha
 		data.Index = types.Int64Value(*result.Index)
 	} else {
 		data.Index = types.Int64Null()
+	}
+}
+
+func restoreChartSectionUpdatedAtFromPrior(data *ChartSectionResourceModel, priorUpdatedAt types.String) {
+	if data.UpdatedAt.IsNull() || data.UpdatedAt.IsUnknown() {
+		data.UpdatedAt = priorUpdatedAt
 	}
 }

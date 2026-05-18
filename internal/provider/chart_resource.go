@@ -89,7 +89,8 @@ func (r *ChartResource) Metadata(ctx context.Context, req resource.MetadataReque
 
 func (r *ChartResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a LangSmith custom chart.",
+		MarkdownDescription: "Manages a LangSmith workspace-scoped custom chart (`/api/v1/charts/*`). " +
+			"Bulk chart read (`POST /api/v1/charts`) and preview (`POST /api/v1/charts/preview`) are not represented as Terraform resources.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The unique identifier of the chart.",
@@ -250,6 +251,14 @@ func (r *ChartResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
+	var prior ChartResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	savedCreatedAt := prior.CreatedAt
+	savedUpdatedAt := prior.UpdatedAt
+
 	body := chartUpdateRequest{}
 	setOptionalString(&body.Title, data.Title)
 	setOptionalString(&body.Description, data.Description)
@@ -282,6 +291,8 @@ func (r *ChartResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	mapChartResponseToState(&data, &result)
 	data.Series = planSeries
+	data.CreatedAt = savedCreatedAt
+	data.UpdatedAt = savedUpdatedAt
 	tflog.Trace(ctx, "updated chart resource", map[string]interface{}{"id": result.ID})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

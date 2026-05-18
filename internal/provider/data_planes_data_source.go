@@ -105,21 +105,15 @@ func (d *DataPlanesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 	elems := make([]attr.Value, 0, len(api.DataPlanes))
 	for _, dp := range api.DataPlanes {
-		statusJSON := ""
-		if len(dp.Status) > 0 {
-			statusJSON = string(dp.Status)
-		}
-		workspacesJSON := ""
-		if len(dp.Workspaces) > 0 {
-			workspacesJSON = string(dp.Workspaces)
-		}
+		statusValue := rawJSONToStringValue(dp.Status)
+		workspacesValue := rawJSONToStringValue(dp.Workspaces)
 		obj, diags := types.ObjectValue(dataPlaneObjectType.AttrTypes, map[string]attr.Value{
 			"id":         types.StringValue(dp.ID),
 			"name":       types.StringValue(dp.Name),
 			"api_url":    types.StringValue(dp.APIURL),
 			"region":     types.StringValue(dp.Region),
-			"status":     types.StringValue(statusJSON),
-			"workspaces": types.StringValue(workspacesJSON),
+			"status":     statusValue,
+			"workspaces": workspacesValue,
 			"created_at": types.StringValue(dp.CreatedAt),
 		})
 		resp.Diagnostics.Append(diags...)
@@ -129,4 +123,11 @@ func (d *DataPlanesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	resp.Diagnostics.Append(diags...)
 	data.DataPlanes = list
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func rawJSONToStringValue(raw json.RawMessage) types.String {
+	if len(raw) == 0 {
+		return types.StringNull()
+	}
+	return types.StringValue(string(raw))
 }

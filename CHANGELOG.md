@@ -41,8 +41,21 @@ FEATURES:
 * **New Data Source:** `langsmith_tool` - Look up a tool by handle
 * **New Data Source:** `langsmith_gateway_policy` - Look up a gateway policy by ID
 * **New Data Source:** `langsmith_mcp_vendor` - Look up an MCP vendor by slug
-* **New Data Source:** `langsmith_audit_log` - Page audit log entries in OCSF format
+* **New Data Source:** `langsmith_audit_log` - Page audit log entries in OCSF format (`GET /api/v1/audit-logs`)
 * **New Data Source:** `langsmith_data_planes` - List self-hosted data planes for the org
+* **New Resource:** `langsmith_fleet_mcp_server` - Register workspace MCP servers (`/v1/platform/fleet/mcp-servers`)
+* **New Data Source:** `langsmith_organizations` - List organizations visible to the caller (`GET /api/v1/orgs`)
+* **New Data Source:** `langsmith_organization_permissions` - List permission catalog entries (`GET /api/v1/orgs/permissions`)
+* **New Data Source:** `langsmith_organization_pending_invites` - List pending organization invitations (`GET /api/v1/orgs/pending`)
+* **New Resource:** `langsmith_platform_feature` - Manage per-feature default and disabled models (`/v1/platform/features/*`)
+* **New Data Source:** `langsmith_platform_features` - List consolidated feature model configuration (`GET /v1/platform/features`)
+* **New Resource:** `langsmith_api_key` - Manage tenant/workspace API keys (`/api/v1/api-key`)
+* **New Resource:** `langsmith_settings` - Workspace tenant handle (`GET /api/v1/settings`, `POST /api/v1/settings/handle`)
+* **New Data Source:** `langsmith_settings` - Read current workspace settings (`GET /api/v1/settings`)
+* **New Data Source:** `langsmith_tenants` - List tenants/workspaces (`GET /api/v1/tenants`)
+* **New Data Source:** `langsmith_project_agent_versions` - Agent deployment versions for a project
+* **New Data Source:** `langsmith_sso_settings_by_slug` - Resolve SSO providers for a login slug (`GET /api/v1/sso/settings/{sso_login_slug}`)
+* **New Data Source:** `langsmith_feedback_ingest_tokens` - List ingest tokens for a run (`GET /api/v1/feedback/tokens`)
 
 ENHANCEMENTS:
 

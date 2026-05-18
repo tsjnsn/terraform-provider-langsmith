@@ -170,6 +170,7 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 | `langsmith_tag_value` | Tag values (nested under tag keys) |
 | `langsmith_tagging` | Assign a tag value to a resource |
 | `langsmith_secret` | Workspace secrets (key/value store) |
+| `langsmith_settings` | Workspace tenant handle (`/api/v1/settings`) |
 | `langsmith_ttl_settings` | Trace retention (TTL) settings |
 | `langsmith_usage_limit` | Usage limits |
 
@@ -179,6 +180,7 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 |----------|-------------|
 | `langsmith_service_account` | Service accounts (create + delete only) |
 | `langsmith_service_key` | API service keys (create + delete only, key is sensitive) |
+| `langsmith_api_key` | Tenant/workspace API keys via `/api/v1/api-key` |
 | `langsmith_personal_access_token` | Org-scoped personal access tokens (create + delete only) |
 | `langsmith_org_role` | Organization roles (RBAC) |
 | `langsmith_org_member` | Organization members |
@@ -194,6 +196,8 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 | `langsmith_alert_rule` | Alert rules for project monitoring |
 | `langsmith_gateway_policy` | LLM Gateway policies (spend caps, allow/deny) |
 | `langsmith_tool` | Agent Builder platform-level tool definitions |
+| `langsmith_platform_feature` | Per-feature default and disabled models (`/v1/platform/features`) |
+| `langsmith_fleet_mcp_server` | Workspace MCP server registrations (`/v1/platform/fleet/mcp-servers`) |
 | `langsmith_playground_settings` | Playground settings |
 | `langsmith_model_price_map` | Model pricing configuration |
 | `langsmith_bulk_export_destination` | Bulk export S3 destinations |
@@ -205,22 +209,31 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 |-------------|-------------|
 | `langsmith_info` | LangSmith server information |
 | `langsmith_organization` | Current organization details |
+| `langsmith_organizations` | Organizations visible to the caller |
+| `langsmith_organization_permissions` | Organization permission catalog |
+| `langsmith_organization_pending_invites` | Pending organization invitations |
 | `langsmith_workspace` | Look up a workspace by name or ID |
+| `langsmith_tenants` | List tenants/workspaces (`GET /api/v1/tenants`) |
 | `langsmith_user` | Look up a user by email |
 | `langsmith_project` | Look up a project by name or ID |
+| `langsmith_project_agent_versions` | Agent deployment versions for a project |
 | `langsmith_dataset` | Look up a dataset by name or ID |
 | `langsmith_annotation_queue` | Look up an annotation queue by name or ID |
 | `langsmith_prompt` | Look up a prompt repo by handle |
 | `langsmith_prompt_commit` | Read a specific prompt commit by hash, tag, or `latest` |
 | `langsmith_run_rule` | Look up a run rule by ID |
 | `langsmith_service_account` | Look up a service account by name or ID |
+| `langsmith_settings` | Current workspace settings (`GET /api/v1/settings`) |
 | `langsmith_org_role` | Look up an org role by name or ID |
 | `langsmith_tag_key` | Look up a tag key |
 | `langsmith_evaluator` | Look up an evaluator by ID |
 | `langsmith_tool` | Look up a platform tool by handle |
+| `langsmith_sso_settings_by_slug` | SSO providers for a login slug |
+| `langsmith_feedback_ingest_tokens` | List feedback ingest tokens for a run |
+| `langsmith_platform_features` | Consolidated platform feature configuration |
 | `langsmith_gateway_policy` | Look up a gateway policy by ID |
 | `langsmith_mcp_vendor` | Look up an MCP vendor by slug |
-| `langsmith_audit_log` | Page audit log entries (OCSF format) |
+| `langsmith_audit_log` | Page audit log entries (OCSF format, `GET /api/v1/audit-logs`) |
 | `langsmith_data_planes` | List self-hosted data planes for the org |
 | `langsmith_chart` / `langsmith_chart_section` | Look up workspace charts and sections |
 | `langsmith_org_chart` / `langsmith_org_chart_section` | Look up org-scoped charts and sections |

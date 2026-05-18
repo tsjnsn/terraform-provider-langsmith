@@ -5,6 +5,7 @@ package provider
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -14,7 +15,14 @@ import (
 // TestAccInsightsConfigResource_basic exercises the beta insights config
 // resource end-to-end. The clustering job itself does not execute as part of
 // this test — only the config CRUD path is verified.
+//
+// Requires trace insights to be enabled for the workspace; otherwise the API
+// returns 400 "Trace insights are not enabled". Set LANGSMITH_TEST_INSIGHTS_CONFIG=1
+// to run against an entitled workspace.
 func TestAccInsightsConfigResource_basic(t *testing.T) {
+	if os.Getenv("LANGSMITH_TEST_INSIGHTS_CONFIG") == "" {
+		t.Skip("Set LANGSMITH_TEST_INSIGHTS_CONFIG=1 to enable (requires trace insights / run insights entitlement)")
+	}
 	projectName := fmt.Sprintf("tf-insights-%s", acctest.RandStringFromCharSet(8, acctest.CharSetAlphaNum))
 	configName := fmt.Sprintf("tf-cfg-%s", acctest.RandStringFromCharSet(8, acctest.CharSetAlphaNum))
 

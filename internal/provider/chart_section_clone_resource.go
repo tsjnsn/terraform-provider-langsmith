@@ -245,9 +245,16 @@ func (r *ChartSectionCloneResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	savedCreatedAt := data.CreatedAt
-	savedSourceSectionID := data.SourceSectionID
-	savedSessionID := data.SessionID
+	var prior ChartSectionCloneResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	savedCreatedAt := prior.CreatedAt
+	savedUpdatedAt := prior.UpdatedAt
+
+	savedSourceSectionID := prior.SourceSectionID
+	savedSessionID := prior.SessionID
 
 	body := chartSectionUpdateRequest{}
 	setOptionalString(&body.Title, data.Title)
@@ -267,7 +274,7 @@ func (r *ChartSectionCloneResource) Update(ctx context.Context, req resource.Upd
 	data.ID = types.StringValue(result.ID)
 	data.Title = types.StringValue(result.Title)
 	setStateOptionalString(&data.Description, result.Description)
-	setStateOptionalString(&data.UpdatedAt, result.ModifiedAt)
+	data.UpdatedAt = savedUpdatedAt
 	if result.Index != nil {
 		data.Index = types.Int64Value(*result.Index)
 	} else {
