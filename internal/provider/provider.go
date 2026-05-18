@@ -197,6 +197,7 @@ func (p *LangSmithProvider) DataSources(ctx context.Context) []func() datasource
 		NewOrgRoleDataSource,
 		NewRunRuleDataSource,
 		NewTagKeyDataSource,
+		NewTagKeysDataSource,
 		NewServiceAccountDataSource,
 		NewSettingsDataSource,
 		NewUserDataSource,

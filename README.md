@@ -226,6 +226,7 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 | `langsmith_settings` | Current workspace settings (`GET /api/v1/settings`) |
 | `langsmith_org_role` | Look up an org role by name or ID |
 | `langsmith_tag_key` | Look up a tag key |
+| `langsmith_tag_keys` | List workspace tag keys (`GET /api/v1/workspaces/current/tag-keys`) |
 | `langsmith_evaluator` | Look up an evaluator by ID |
 | `langsmith_tool` | Look up a platform tool by handle |
 | `langsmith_sso_settings_by_slug` | SSO providers for a login slug |
