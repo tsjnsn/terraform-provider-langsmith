@@ -195,6 +195,14 @@ func (r *OrgChartResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
+	var prior ChartResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	savedCreatedAt := prior.CreatedAt
+	savedUpdatedAt := prior.UpdatedAt
+
 	body := chartUpdateRequest{}
 	setOptionalString(&body.Title, data.Title)
 	setOptionalString(&body.Description, data.Description)
@@ -227,6 +235,8 @@ func (r *OrgChartResource) Update(ctx context.Context, req resource.UpdateReques
 
 	mapChartResponseToState(&data, &result)
 	data.Series = planSeries
+	data.CreatedAt = savedCreatedAt
+	data.UpdatedAt = savedUpdatedAt
 	tflog.Trace(ctx, "updated org chart resource", map[string]interface{}{"id": result.ID})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
