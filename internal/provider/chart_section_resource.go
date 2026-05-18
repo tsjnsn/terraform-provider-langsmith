@@ -186,8 +186,13 @@ func (r *ChartSectionResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// Preserve created_at from plan; UseStateForUnknown means it should not change.
-	savedCreatedAt := data.CreatedAt
+	var prior ChartSectionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	savedCreatedAt := prior.CreatedAt
+	savedUpdatedAt := prior.UpdatedAt
 
 	body := chartSectionUpdateRequest{}
 	setOptionalString(&body.Title, data.Title)
@@ -206,6 +211,7 @@ func (r *ChartSectionResource) Update(ctx context.Context, req resource.UpdateRe
 
 	mapChartSectionResponseToState(&data, &result)
 	data.CreatedAt = savedCreatedAt
+	data.UpdatedAt = savedUpdatedAt
 	tflog.Trace(ctx, "updated chart section resource", map[string]interface{}{"id": result.ID})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
