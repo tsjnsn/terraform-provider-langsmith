@@ -173,6 +173,8 @@ func (p *LangSmithProvider) Resources(ctx context.Context) []func() resource.Res
 		NewAnnotationQueueReviewerResource,
 		NewRepoOwnerResource,
 		NewInsightsConfigResource,
+		NewPlatformFeatureResource,
+		NewFleetMCPServerResource,
 	}
 }
 
@@ -197,6 +199,7 @@ func (p *LangSmithProvider) DataSources(ctx context.Context) []func() datasource
 		NewSettingsDataSource,
 		NewUserDataSource,
 		NewSSOSettingsBySlugDataSource,
+		NewPlatformFeaturesDataSource,
 		NewChartDataSource,
 		NewChartSectionDataSource,
 		NewOrgChartDataSource,
