@@ -49,7 +49,6 @@ FEATURES:
 * **New Data Source:** `langsmith_organization_pending_invites` - List pending organization invitations (`GET /api/v1/orgs/pending`)
 * **New Resource:** `langsmith_platform_feature` - Manage per-feature default and disabled models (`/v1/platform/features/*`)
 * **New Data Source:** `langsmith_platform_features` - List consolidated feature model configuration (`GET /v1/platform/features`)
-* **Removed Data Source:** `langsmith_audit_logs` — duplicate of upstream `langsmith_audit_log` on the same API; use `langsmith_audit_log` instead.
 * **New Resource:** `langsmith_api_key` - Manage tenant/workspace API keys (`/api/v1/api-key`)
 * **New Resource:** `langsmith_settings` - Workspace tenant handle (`GET /api/v1/settings`, `POST /api/v1/settings/handle`)
 * **New Data Source:** `langsmith_settings` - Read current workspace settings (`GET /api/v1/settings`)
