@@ -65,7 +65,7 @@ type datasetDataSourceAPIResponse struct {
 	TenantID                string          `json:"tenant_id"`
 	CreatedAt               string          `json:"created_at"`
 	ModifiedAt              string          `json:"modified_at"`
-	ExampleCount            int64           `json:"example_count"`
+	ExampleCount            *int64          `json:"example_count"`
 	SessionCount            *int64          `json:"session_count"`
 	LastSessionStartTime    *string         `json:"last_session_start_time"`
 }
@@ -253,7 +253,11 @@ func (d *DatasetDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.TenantID = types.StringValue(result.TenantID)
 	data.CreatedAt = types.StringValue(result.CreatedAt)
 	data.ModifiedAt = types.StringValue(result.ModifiedAt)
-	data.ExampleCount = types.Int64Value(result.ExampleCount)
+	if result.ExampleCount != nil {
+		data.ExampleCount = types.Int64Value(*result.ExampleCount)
+	} else {
+		data.ExampleCount = types.Int64Null()
+	}
 
 	if result.SessionCount != nil {
 		data.SessionCount = types.Int64Value(*result.SessionCount)

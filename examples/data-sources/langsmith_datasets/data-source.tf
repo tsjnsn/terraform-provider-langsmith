@@ -1,10 +1,10 @@
-# List datasets in the current workspace with optional API filters.
-# See the provider docs for supported query parameters (pagination, sort, name filters, etc.).
+# List the first page of datasets in the current workspace.
+# See the provider docs for pagination, sorting, and additional filters.
 
-data "langsmith_datasets" "all" {}
+data "langsmith_datasets" "first_page" {}
 
 output "dataset_ids" {
-  value = [for d in data.langsmith_datasets.all.datasets : d.id]
+  value = [for d in data.langsmith_datasets.first_page.datasets : d.id]
 }
 
 data "langsmith_datasets" "recent_kv" {

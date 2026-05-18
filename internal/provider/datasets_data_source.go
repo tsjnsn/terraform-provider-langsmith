@@ -362,13 +362,18 @@ func datasetsListQueryValues(ctx context.Context, data *DatasetsDataSourceModel)
 
 func datasetListItemObjectMap(result *datasetDataSourceAPIResponse) map[string]attr.Value {
 	m := map[string]attr.Value{
-		"id":            types.StringValue(result.ID),
-		"name":          types.StringValue(result.Name),
-		"data_type":     types.StringValue(result.DataType),
-		"tenant_id":     types.StringValue(result.TenantID),
-		"created_at":    types.StringValue(result.CreatedAt),
-		"modified_at":   types.StringValue(result.ModifiedAt),
-		"example_count": types.Int64Value(result.ExampleCount),
+		"id":          types.StringValue(result.ID),
+		"name":        types.StringValue(result.Name),
+		"data_type":   types.StringValue(result.DataType),
+		"tenant_id":   types.StringValue(result.TenantID),
+		"created_at":  types.StringValue(result.CreatedAt),
+		"modified_at": types.StringValue(result.ModifiedAt),
+	}
+
+	if result.ExampleCount != nil {
+		m["example_count"] = types.Int64Value(*result.ExampleCount)
+	} else {
+		m["example_count"] = types.Int64Null()
 	}
 
 	if result.Description != nil {

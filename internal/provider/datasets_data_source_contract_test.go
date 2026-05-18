@@ -8,8 +8,29 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
+
+func TestDatasetListItemObjectMap_ExampleCountNullWhenOmitted(t *testing.T) {
+	result := datasetListItemObjectMap(&datasetDataSourceAPIResponse{
+		ID:         "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+		Name:       "Alpha",
+		DataType:   "kv",
+		TenantID:   "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+		CreatedAt:  "2024-01-02T00:00:00Z",
+		ModifiedAt: "2024-01-03T00:00:00Z",
+	})
+
+	exampleCount, ok := result["example_count"].(types.Int64)
+	if !ok {
+		t.Fatalf("expected example_count to be types.Int64, got %T", result["example_count"])
+	}
+
+	if !exampleCount.IsNull() {
+		t.Fatalf("expected example_count to be null when omitted, got %v", exampleCount.ValueInt64())
+	}
+}
 
 func TestAccDatasetsDataSource_contract(t *testing.T) {
 	payload := `[{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","name":"Alpha","description":"first","data_type":"kv","inputs_schema_definition":null,"outputs_schema_definition":null,"externally_managed":false,"transformations":null,"metadata":null,"tenant_id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","created_at":"2024-01-02T00:00:00Z","modified_at":"2024-01-03T00:00:00Z","example_count":3,"session_count":1,"last_session_start_time":null},{"id":"cccccccc-cccc-cccc-cccc-cccccccccccc","name":"Beta","description":null,"data_type":"llm","inputs_schema_definition":null,"outputs_schema_definition":null,"externally_managed":null,"transformations":null,"metadata":null,"tenant_id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","created_at":"2024-01-04T00:00:00Z","modified_at":"2024-01-05T00:00:00Z","example_count":0,"session_count":2,"last_session_start_time":"2024-01-06T00:00:00Z"}]`
