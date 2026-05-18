@@ -211,7 +211,7 @@ func (r *ChartSectionResource) Update(ctx context.Context, req resource.UpdateRe
 
 	mapChartSectionResponseToState(&data, &result)
 	data.CreatedAt = savedCreatedAt
-	data.UpdatedAt = savedUpdatedAt
+	restoreChartSectionUpdatedAtFromPrior(&data, savedUpdatedAt)
 	tflog.Trace(ctx, "updated chart section resource", map[string]interface{}{"id": result.ID})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -246,5 +246,11 @@ func mapChartSectionResponseToState(data *ChartSectionResourceModel, result *cha
 		data.Index = types.Int64Value(*result.Index)
 	} else {
 		data.Index = types.Int64Null()
+	}
+}
+
+func restoreChartSectionUpdatedAtFromPrior(data *ChartSectionResourceModel, priorUpdatedAt types.String) {
+	if data.UpdatedAt.IsNull() || data.UpdatedAt.IsUnknown() {
+		data.UpdatedAt = priorUpdatedAt
 	}
 }
