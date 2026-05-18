@@ -6,8 +6,10 @@ package client
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -15,7 +17,7 @@ import (
 )
 
 func newTestClient(srv *httptest.Server) *Client {
-	c := NewClient(srv.URL, "test-key", "tenant-123", "test-ua/1.0")
+	c := NewClient(srv.URL, "test-key", "tenant-123", "", "test-ua/1.0")
 	// Keep tests fast: cap retries and shorten the HTTP timeout.
 	c.MaxRetries = 3
 	c.HTTPClient.Timeout = 5 * time.Second
@@ -273,6 +275,102 @@ func TestClient_PostMarshalsBody(t *testing.T) {
 	}
 	if resp.ID != "abc" {
 		t.Errorf("resp.ID = %q", resp.ID)
+	}
+}
+
+func TestClient_SetsOrganizationHeader(t *testing.T) {
+	var org string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		org = r.Header.Get("X-Organization-Id")
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "test-key", "tenant-123", "org-456", "ua")
+	c.MaxRetries = 0
+	c.HTTPClient.Timeout = 5 * time.Second
+	if err := c.Get(context.Background(), "/x", nil, nil); err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if org != "org-456" {
+		t.Fatalf("X-Organization-Id = %q", org)
+	}
+}
+
+func TestClient_PostWithQuery_Patch_Put_Delete_Variants(t *testing.T) {
+	var lastMethod, lastPath, lastRaw string
+	var lastBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		lastMethod = r.Method
+		lastPath = r.URL.Path
+		lastRaw = r.URL.RawQuery
+		lastBody, _ = io.ReadAll(r.Body)
+		w.WriteHeader(200)
+		if strings.Contains(r.URL.Path, "/with-result") {
+			_, _ = w.Write([]byte(`{"ok":true}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+
+	c := newTestClient(srv)
+	ctx := context.Background()
+	q := url.Values{}
+	q.Set("k", "v")
+
+	if err := c.PostWithQuery(ctx, "/postq", q, map[string]int{"n": 1}, nil); err != nil {
+		t.Fatalf("PostWithQuery: %v", err)
+	}
+	if lastMethod != "POST" || lastPath != "/postq" || !strings.Contains(lastRaw, "k=v") {
+		t.Fatalf("PostWithQuery: method=%q path=%q raw=%q", lastMethod, lastPath, lastRaw)
+	}
+
+	if err := c.Patch(ctx, "/patch", map[string]string{"a": "b"}, nil); err != nil {
+		t.Fatalf("Patch: %v", err)
+	}
+	if lastMethod != "PATCH" {
+		t.Fatalf("Patch method = %q", lastMethod)
+	}
+
+	if err := c.Put(ctx, "/put", map[string]bool{"x": true}, nil); err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+	if lastMethod != "PUT" {
+		t.Fatalf("Put method = %q", lastMethod)
+	}
+
+	var delQuery url.Values
+	if err := c.DeleteWithQuery(ctx, "/delq", delQuery); err != nil {
+		t.Fatalf("DeleteWithQuery: %v", err)
+	}
+	if lastMethod != "DELETE" || lastPath != "/delq" {
+		t.Fatalf("DeleteWithQuery: method=%q path=%q", lastMethod, lastPath)
+	}
+
+	if err := c.DeleteWithBody(ctx, "/delbody", map[string]string{"id": "z"}); err != nil {
+		t.Fatalf("DeleteWithBody: %v", err)
+	}
+	if lastMethod != "DELETE" || !strings.Contains(string(lastBody), `"id":"z"`) {
+		t.Fatalf("DeleteWithBody: method=%q body=%q", lastMethod, string(lastBody))
+	}
+
+	if err := c.Delete(ctx, "/del"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if lastMethod != "DELETE" || lastPath != "/del" {
+		t.Fatalf("Delete: method=%q path=%q", lastMethod, lastPath)
+	}
+
+	var resp struct {
+		OK bool `json:"ok"`
+	}
+	if err := c.PostWithQuery(ctx, "/with-result", q, nil, &resp); err != nil {
+		t.Fatalf("PostWithQuery result: %v", err)
+	}
+	if !resp.OK {
+		t.Fatal("expected JSON result")
 	}
 }
 
