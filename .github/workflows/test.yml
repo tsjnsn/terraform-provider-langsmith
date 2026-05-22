@@ -3,6 +3,12 @@ name: Tests
 
 on:
   pull_request:
+    branches: [main, dev-ai]
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CLAUDE.md'
+  merge_group:
     paths-ignore:
       - 'README.md'
       - 'CHANGELOG.md'
@@ -10,6 +16,7 @@ on:
   push:
     branches:
       - main
+      - dev-ai
     paths-ignore:
       - 'README.md'
       - 'CHANGELOG.md'
