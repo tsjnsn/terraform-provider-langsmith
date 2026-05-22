@@ -21,6 +21,11 @@ make generate
 
 CI mirrors this flow (see `.github/workflows/test.yml`).
 
+Agent work targets the `dev-ai` branch; releases merge **`dev-ai` → `main`**. If Copilot
+cannot push review fixes (GH006 / required status checks on `dev-ai`), see
+[`.github/DEV_AI.md`](.github/DEV_AI.md) for branch ruleset setup—do not open a second PR
+just to land Copilot commits.
+
 ## Acceptance tests (`TF_ACC`)
 
 Acceptance tests call the live LangSmith API. Terraform runs them only when **`TF_ACC=1`**; `make testacc` sets that for you.
