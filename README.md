@@ -245,7 +245,7 @@ This pattern works well for a known, static set of workspaces. Dynamic `for_each
 
 ### Requirements
 
-- [Go](https://golang.org/doc/install) >= 1.24
+- [Go](https://golang.org/doc/install) >= 1.25
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
 
 ### Build & Test
