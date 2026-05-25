@@ -18,7 +18,7 @@ Single test: `go test ./internal/provider -run TestName -v`. Acceptance variants
 
 Provider debugging with delve: `go run . -debug` and follow the printed `TF_REATTACH_PROVIDERS` instructions.
 
-Go version: 1.24+.
+Go version: 1.25+.
 
 ## Architecture
 
